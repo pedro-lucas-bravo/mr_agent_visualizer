@@ -26,6 +26,7 @@ using System.Collections.Generic;
 
 #if ENABLE_WINMD_SUPPORT
 using Windows.Networking.Sockets;
+using Windows.Storage.Streams;
 #else
 using System.Net.Sockets;
 using System.Threading;
@@ -69,27 +70,31 @@ namespace UnityOSC
         private int _localPort;
         private int _sleepMilliseconds = 10;
 		#endregion
-		
+
 		#region Properties
 #if ENABLE_WINMD_SUPPORT
 		private async void Socket_MessageReceived(Windows.Networking.Sockets.DatagramSocket sender,
 		Windows.Networking.Sockets.DatagramSocketMessageReceivedEventArgs args)
-		{
-
-
+		{		
 			// lock multi event 
 			socket.MessageReceived -= Socket_MessageReceived;
 
-			//Debug.Log("OSCSERVER UWP  Socket_MessageReceived");
-
-			//Read the message that was received from the UDP echo client.
-			Stream streamIn = args.GetDataStream().AsStreamForRead();
-
-			StreamReader reader = new StreamReader(streamIn);
-			byte[] bytes = reader.CurrentEncoding.GetBytes(reader.ReadToEnd());
-
-			streamIn.Dispose();
-			reader.Dispose();
+			byte[] bytes = null;
+			using (DataReader dataReader = args.GetDataReader()) {
+                // Get unread buffer size
+                uint length = dataReader.UnconsumedBufferLength;
+                // Byte order acquisition (little endian or big endian)
+                // It is planned to transmit in BINARY communication mode, so it must be little endian
+                ByteOrder order = dataReader.ByteOrder;
+                // Read received data
+                bytes = new byte[length];
+                dataReader.ReadBytes(bytes);  
+				
+				//Test += "\nTESTX...";
+				//for (int i = 0; i < aucRecvPacket.Length; i++) {
+				//	Test += "\n" + aucRecvPacket[i];
+				//}
+            }
 
 			OSCPacket packet = OSCPacket.Unpack(bytes);
 			_lastReceivedPacket = packet;
@@ -210,32 +215,35 @@ namespace UnityOSC
 #endif
 		}
 
+		//public static string Test = "";
+
 #if !ENABLE_WINMD_SUPPORT
 		/// <summary>
 		/// Receives and unpacks an OSC packet.
-        /// A <see cref="OSCPacket"/>
+		/// A <see cref="OSCPacket"/>
 		/// </summary>
 		private void Receive()
 		{
 			IPEndPoint ip = null;
 			
-			try
-			{
+			//try
+			//{
 				byte[] bytes = _udpClient.Receive(ref ip);
 
 				if(bytes != null && bytes.Length > 0)
-				{
+				{					
                     OSCPacket packet = OSCPacket.Unpack(bytes);
 
                     _lastReceivedPacket = packet;
 
                     PacketReceivedEvent(this, _lastReceivedPacket);	
 				}
-			}
-			catch{
-				throw new Exception(String.Format("Can't create server at port {0}", _localPort));
-  			}
-		}
+			//}
+			//catch (Exception e){
+				//throw new Exception(String.Format("Can't create server at port {0}: {1}", _localPort, e.Message));
+			//	throw e;
+  			//}
+		}		
 		
 		/// <summary>
 		/// Thread pool that receives upcoming messages.

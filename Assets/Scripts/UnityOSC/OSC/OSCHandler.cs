@@ -119,6 +119,8 @@ public class OSCHandler : MonoBehaviour
 			return _servers;
 		}
 	}
+
+	public Action<string, List<object>> OnReceiveMessage { get; set; }
 	#endregion
 	
 	#region Methods
@@ -200,6 +202,7 @@ public class OSCHandler : MonoBehaviour
 
     void OnPacketReceived(OSCServer server, OSCPacket packet)
     {
+		if (OnReceiveMessage != null) OnReceiveMessage(packet.Address, packet.Data);
     }
 	
 	/// <summary>
