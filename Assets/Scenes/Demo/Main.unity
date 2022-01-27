@@ -325,6 +325,7 @@ MonoBehaviour:
   render: {fileID: 185471764}
   onNormalColor: {r: 1, g: 0, b: 0, a: 1}
   onFocusColor: {r: 0, g: 0, b: 1, a: 1}
+  smoothTime: 0.1
 --- !u!1 &205802115 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000012125673284, guid: 90749889d87976143a9e21072d2434b4,

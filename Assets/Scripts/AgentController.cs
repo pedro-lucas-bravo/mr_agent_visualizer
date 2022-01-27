@@ -10,9 +10,11 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     public Renderer render;
     public Color onNormalColor;
     public Color onFocusColor;
+    public float smoothTime = 0.15f;
 
     void Start() {
         AgentDataManager.Instance.Agents.Add(Id, this);
+        lastPosition_ = trans.position;
     }
 
     public void OnFocusEnter() {
@@ -30,8 +32,15 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     #region Data to set
 
     public void SetPosition(Vector3 position) {
-        trans.position = position;
+        lastPosition_ = position;
     }
 
     #endregion
+
+    void Update() {
+        var vel = Vector3.zero;
+        trans.position = Vector3.SmoothDamp(trans.position, lastPosition_, ref vel, smoothTime);
+    }
+
+    private Vector3 lastPosition_;
 }
