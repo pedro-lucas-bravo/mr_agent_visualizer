@@ -77,7 +77,7 @@ public class AgentDataManager : MonoBehaviour
         selectOutStateMessage_[0] = agent.Id;
         selectOutStateMessage_[1] = (int)agent.state;
         osc.SendMessageToClient(selectOutState);
-        Debug.LogWarning("OSC SEND");
+        //Debug.LogWarning("OSC SEND");
 
         //TO DO: Implement confirmation mesages startegy
     }
