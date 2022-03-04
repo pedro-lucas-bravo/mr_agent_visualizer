@@ -56,23 +56,29 @@ public class AgentDataManager : MonoBehaviour
                 newAgent.Id = i;
                 newAgent.SetStateFromInt(state);
                 newAgent.SetColor(color);
+                newAgent.gameObject.SetActive(false);
                 Agents.Add(i, newAgent);
             }
         }
 
         if (address == sensorPositionInAddress) {//Position from mocap for locked agent
-            var position = new Vector3((int)values[0], (int)values[1], (int)values[2]) / 1000.0f;
-            var lockedAgent = Agents.FirstOrDefault(a => a.Value.state == AgentController.State.Locked);
-            if (lockedAgent.Value != null) {
-                var agent = lockedAgent.Value;
+            var agentId = (int)values[0];
+            var position = new Vector3((int)values[1], (int)values[3], (int)values[2]) / 1000.0f;
+            if (Agents.TryGetValue(agentId, out var agent)) {
+                if (!agent.gameObject.activeSelf)
+                    agent.gameObject.SetActive(true);
+                agent.SetState(AgentController.State.Locked);
                 agent.SetPosition(position);
             }
         }
 
         if (address == positionInAddress) {//Position for released agent from controller
             var agentId = (int)values[0];
-            var position = new Vector3((int)values[1], (int)values[2], (int)values[3]) / 1000.0f;
-            if (Agents.TryGetValue(agentId, out var agent) && agent.state == AgentController.State.Released) {                
+            var position = new Vector3((int)values[1], (int)values[3], (int)values[2]) / 1000.0f;
+            if (Agents.TryGetValue(agentId, out var agent)) {
+                if (!agent.gameObject.activeSelf)
+                    agent.gameObject.SetActive(true);
+                agent.SetState(AgentController.State.Released);
                 agent.SetPosition(position);
                 //Debug.Log("ID:" + (int)values[0] + positionInAddress + ": " + agent.trans.position.ToString("F4"));
             }        

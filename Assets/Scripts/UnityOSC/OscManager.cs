@@ -40,6 +40,8 @@ public class OscManager : MonoBehaviour {
         wasReceived_ = true;//The flag strategy avoids to execute unity code in a different thread
         lastAddress_ = address;
         lastData_ = data;
+        if (lastAddress_ == CONNECT_ADDRESS)
+            ConnectClient();
     }
 
     private void OnDestroy() {
@@ -77,24 +79,27 @@ public class OscManager : MonoBehaviour {
 		OSCHandler.Instance.SendMessageToClient(Id, oscAddress, messagesToSend[oscAddress]);
 	}
 
-    private void Update() {
-        if (wasReceived_) {
-            //if request a connection
-            IPAddress ipAddressClient;
-            if (lastAddress_ == CONNECT_ADDRESS && 
-                lastData_.Count == 2 &&
-                IPAddress.TryParse(lastData_[0] as string, out ipAddressClient) &&
-                lastData_[1] is int port
-                ) {
-                //Close and remove all clients
-                foreach (var pair in OSCHandler.Instance.Clients) {
-                    pair.Value.client.Close();
-                }
-                OSCHandler.Instance.Clients.Clear();
-                //Create a new client
-                OSCHandler.Instance.CreateClient(Id, ipAddressClient, port);
-                Debug.Log("Connected: " + lastData_[0] + ", " + lastData_[1]);
+    private void ConnectClient() {
+        //if request a connection
+        IPAddress ipAddressClient;
+        if (lastAddress_ == CONNECT_ADDRESS &&
+            lastData_.Count == 2 &&
+            IPAddress.TryParse(lastData_[0] as string, out ipAddressClient) &&
+            lastData_[1] is int port
+            ) {
+            //Close and remove all clients
+            foreach (var pair in OSCHandler.Instance.Clients) {
+                pair.Value.client.Close();
             }
+            OSCHandler.Instance.Clients.Clear();
+            //Create a new client
+            OSCHandler.Instance.CreateClient(Id, ipAddressClient, port);
+            //Debug.Log("Connected: " + lastData_[0] + ", " + lastData_[1]);
+        }
+    }
+
+    private void Update() {
+        if (wasReceived_) {            
             //Debug.Log(OSCPacket.Test);
             //Debug.Log(OSCServer.Test);
             if (OnReceiveMessage != null) {              
