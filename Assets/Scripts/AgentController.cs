@@ -67,7 +67,6 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
 
     public void SetStateFromInt(int s) {
         state = (State)s;
-        Debug.Log(state);
     }
 
     public void SetColor(Color c) {

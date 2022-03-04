@@ -17,8 +17,9 @@ public class OscManager : MonoBehaviour {
 	private Dictionary<string, List<object>> messagesToSend;
 
 	public Action<string, List<object>> OnReceiveMessage;//oscaddress, values
+    public Action<string, List<object>> OnReceiveMessageOnMainThread;//oscaddress, values
 
-	private bool wasReceived_ = false;
+    private bool wasReceived_ = false;
 	private string lastAddress_;
 	private List<object> lastData_;
 
@@ -42,6 +43,9 @@ public class OscManager : MonoBehaviour {
         lastData_ = data;
         if (lastAddress_ == CONNECT_ADDRESS)
             ConnectClient();
+        if (OnReceiveMessage != null) {
+            OnReceiveMessage(lastAddress_, lastData_);
+        }
     }
 
     private void OnDestroy() {
@@ -102,8 +106,8 @@ public class OscManager : MonoBehaviour {
         if (wasReceived_) {            
             //Debug.Log(OSCPacket.Test);
             //Debug.Log(OSCServer.Test);
-            if (OnReceiveMessage != null) {              
-                OnReceiveMessage(lastAddress_, lastData_);
+            if (OnReceiveMessageOnMainThread != null) {              
+                OnReceiveMessageOnMainThread(lastAddress_, lastData_);
             }
             wasReceived_ = false;
         }
