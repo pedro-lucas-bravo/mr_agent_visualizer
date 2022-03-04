@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Demo/Main.unity
     guid: 32bf92a35a19a354dbe9f4fdd09894c9
+  - enabled: 0
+    path: Assets/Scenes/Demo/Main-AR.unity
+    guid: a7dc1aed3184a7040add4c43d8e6d3ba
   m_configObjects:
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: 37df4b5efea440f47bd2d9cdda164a9d,
       type: 2}

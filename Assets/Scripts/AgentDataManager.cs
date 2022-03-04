@@ -13,9 +13,13 @@ public class AgentDataManager : MonoBehaviour
     public string selectOutState = "/agent/state";
 
     [Header("Addresses to receive")]
+    public string instanceAgentAddress = "/agent/instance";    
     public string sensorPositionInAddress = "/sensor/position";
     public string positionInAddress = "/agent/position";
     public string positionInDawSelect= "/agent/daw/select";
+
+    [Header("Agent Parameters")]
+    public AgentController agentPrefab;
 
     public Dictionary<int, AgentController> Agents { get; set; }
 
@@ -40,6 +44,22 @@ public class AgentDataManager : MonoBehaviour
     }
 
     private void OnReceive(string address, List<object> values) {
+        if (address == instanceAgentAddress) {//Instance new agents by removing the old ones first
+            RemoveAllAgents();
+            var agentsSize = (int)values[0];
+            for (int i = 0; i < agentsSize; i++) {
+                var state = (int)values[i * 2 + 1];
+                var colorHex = (string)values[i * 2 + 2];
+                ColorUtility.TryParseHtmlString("#" + colorHex, out Color color);
+
+                var newAgent = Instantiate(agentPrefab);
+                newAgent.Id = i;
+                newAgent.SetStateFromInt(state);
+                newAgent.SetColor(color);
+                Agents.Add(i, newAgent);
+            }
+        }
+
         if (address == sensorPositionInAddress) {//Position from mocap for locked agent
             var position = new Vector3((int)values[0], (int)values[1], (int)values[2]) / 1000.0f;
             var lockedAgent = Agents.FirstOrDefault(a => a.Value.state == AgentController.State.Locked);
@@ -80,6 +100,13 @@ public class AgentDataManager : MonoBehaviour
         //Debug.LogWarning("OSC SEND");
 
         //TO DO: Implement confirmation mesages startegy
+    }
+
+    private void RemoveAllAgents() {
+        foreach (var agent in Agents) {
+            Destroy(agent.Value.gameObject);
+        }
+        Agents.Clear();
     }
 
     private void Update() {

@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using HoloToolkit.Unity;
 using HoloToolkit.Unity.InputModule;
+using Microsoft.MixedReality.Toolkit.Experimental.UI;
 
 namespace HoloToolkit.UI.Keyboard
 {

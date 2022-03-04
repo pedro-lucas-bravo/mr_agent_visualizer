@@ -5,26 +5,27 @@ using UnityEngine;
 
 public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
 
-    public enum State { Locked, Released}
+    public enum State { Empty, Locked, Released}
 
     public int Id;
     public Transform trans;
     public Renderer render;
-    public Color onLockedColor;
-    public Color onReleasedColor;
-    public Color onFocusColor;
+    public Color color;
+    //public Color onLockedColor;
+    //public Color onReleasedColor;
+    //public Color onFocusColor;
     public float smoothTime = 0.15f;
 
     public State state { get; private set; }
 
     void Start() {
-        AgentDataManager.Instance.Agents.Add(Id, this);
+        //AgentDataManager.Instance.Agents.Add(Id, this);
         lastPosition_ = trans.position;
-        state = State.Locked;
+        //state = State.Locked;
     }
 
     public void OnFocusEnter() {
-        render.material.color = onFocusColor;
+        //render.material.color = onFocusColor;
     }
 
     public void OnFocusExit() {
@@ -64,16 +65,26 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         }
     }
 
+    public void SetStateFromInt(int s) {
+        state = (State)s;
+        Debug.Log(state);
+    }
+
+    public void SetColor(Color c) {
+        color = c;
+        render.material.color = color;
+    }
+
     #endregion
 
     #region Feedback
 
     void ApplyLockedFeedback() {
-        render.material.color = onLockedColor;
+        //render.material.color = onLockedColor;
     }
 
     void ApplyReleasedFeedback() {
-        render.material.color = onReleasedColor;
+        //render.material.color = onReleasedColor;
     }
 
     #endregion

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityOSC;
 using System.Linq;
+using System.Net;
 
 public class OscManager : MonoBehaviour {
 
@@ -21,11 +22,17 @@ public class OscManager : MonoBehaviour {
 	private string lastAddress_;
 	private List<object> lastData_;
 
+    public static readonly string CONNECT_ADDRESS = "/connect";
+
     // Script initialization
     void Awake() {
-        OSCHandler.Instance.Init(Id, TargetAddr, OutGoingPort,InComingPort);
-		//servers = new Dictionary<string, ServerLog>();
-		messagesToSend = new Dictionary<string, List<object>>();
+        //OSCHandler.Instance.Init(Id, TargetAddr, OutGoingPort,InComingPort);
+        //servers = new Dictionary<string, ServerLog>();
+
+        //Create receiver
+        OSCHandler.Instance.CreateServer(Id, InComingPort);
+
+        messagesToSend = new Dictionary<string, List<object>>();
 		OSCHandler.Instance.OnReceiveMessage += OnReceive;
 	}
 
@@ -72,9 +79,27 @@ public class OscManager : MonoBehaviour {
 
     private void Update() {
         if (wasReceived_) {
+            //if request a connection
+            IPAddress ipAddressClient;
+            if (lastAddress_ == CONNECT_ADDRESS && 
+                lastData_.Count == 2 &&
+                IPAddress.TryParse(lastData_[0] as string, out ipAddressClient) &&
+                lastData_[1] is int port
+                ) {
+                //Close and remove all clients
+                foreach (var pair in OSCHandler.Instance.Clients) {
+                    pair.Value.client.Close();
+                }
+                OSCHandler.Instance.Clients.Clear();
+                //Create a new client
+                OSCHandler.Instance.CreateClient(Id, ipAddressClient, port);
+                Debug.Log("Connected: " + lastData_[0] + ", " + lastData_[1]);
+            }
             //Debug.Log(OSCPacket.Test);
             //Debug.Log(OSCServer.Test);
-            if (OnReceiveMessage != null) OnReceiveMessage(lastAddress_, lastData_);
+            if (OnReceiveMessage != null) {              
+                OnReceiveMessage(lastAddress_, lastData_);
+            }
             wasReceived_ = false;
         }
     }
