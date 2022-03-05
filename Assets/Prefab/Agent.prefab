@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7029161431789073746}
   - component: {fileID: 7029161431789073741}
   m_Layer: 0
-  m_Name: Agent_1
+  m_Name: Agent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,8 +28,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7029161431789073740}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 2.2222223}
-  m_LocalScale: {x: 0.44444448, y: 0.44444448, z: 0.44444448}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.15, y: 0.15, z: 0.15}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0

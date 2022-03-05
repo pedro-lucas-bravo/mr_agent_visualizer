@@ -48,6 +48,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     #region Data to set
 
     public void SetPosition(Vector3 position) {
+        position = trans.parent != null ? position / trans.parent.localScale.x : position;
         lastPosition_ = position;
     }
 
@@ -89,8 +90,8 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     #endregion
 
     void Update() {
-        var vel = Vector3.zero;
-        trans.position = Vector3.SmoothDamp(trans.position, lastPosition_, ref vel, smoothTime);
+        var vel = Vector3.zero;        
+        trans.localPosition = Vector3.SmoothDamp(trans.localPosition, lastPosition_, ref vel, smoothTime);
     }
 
     private Vector3 lastPosition_;    

@@ -19,6 +19,7 @@ public class AgentDataManager : MonoBehaviour
 
     [Header("Agent Parameters")]
     public AgentController agentPrefab;
+    public Transform agentParent;
 
     public Dictionary<int, AgentController> Agents { get; set; }
 
@@ -82,6 +83,7 @@ public class AgentDataManager : MonoBehaviour
             ColorUtility.TryParseHtmlString("#" + colorHex, out Color color);
 
             var newAgent = Instantiate(agentPrefab);
+            newAgent.transform.SetParent(agentParent, true);
             newAgent.Id = i;
             newAgent.SetStateFromInt(state);
             newAgent.SetColor(color);
