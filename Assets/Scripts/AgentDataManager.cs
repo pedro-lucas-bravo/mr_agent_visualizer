@@ -10,11 +10,11 @@ public class AgentDataManager : MonoBehaviour
 
     [Header("Addresses to send")]
     public string selectOutAddress = "/agent/select";
-    public string selectOutState = "/agent/state";
+    //public string selectOutState = "/agent/state";
 
     [Header("Addresses to receive")]
     public string instanceAgentAddress = "/agent/instance";    
-    public string sensorPositionInAddress = "/sensor/position";
+    //public string sensorPositionInAddress = "/sensor/position";
     public string agentsInfoAddress = "/agents";
 
     [Header("Agent Parameters")]
@@ -36,7 +36,7 @@ public class AgentDataManager : MonoBehaviour
     void Start() {
         //Sender message
         selectOutMessage_ = osc.DefineMessageToClient(selectOutAddress, 1);
-        selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
+        //selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
 
         //Receivers        
         osc.OnReceiveMessage += OnReceive;        
@@ -55,19 +55,32 @@ public class AgentDataManager : MonoBehaviour
             instantiateAgentsFlag_ = true;
         }
 
-        if (address == sensorPositionInAddress && !sensorPositionFlag_) {//Position from mocap for locked agent
-            agentIdSensorPosition_ = (int)values[0];
-            sensorPosition_ = new Vector3((int)values[1], (int)values[3], (int)values[2]) / 1000.0f;
-            sensorPositionFlag_ = true;
-        }
+        //if (address == sensorPositionInAddress && !sensorPositionFlag_) {//Position from mocap for locked agent
+        //    agentIdSensorPosition_ = (int)values[0];
+        //    agentStateSensorPosition_ = (int)values[1];
+        //    sensorPosition_ = new Vector3((int)values[3], (int)values[4], (int)values[3]) / 1000.0f;
+        //    sensorPositionFlag_ = true;
+        //}
 
         if (address == agentsInfoAddress && !agentInfosFlag_) {//Agents info, position and musical data
-            agentInfosSize_ = (int)values[0];
-            for (int i = 0; i < agentInfosSize_; i++) {
-                agentInfos_[i].Id = (int)values[i * 4 + 1];
-                agentInfos_[i].position = new Vector3((int)values[i * 4 + 2], (int)values[i * 4 + 4], (int)values[i * 4 + 3]) / 1000.0f;
+            try {
+                var incomingId = (int)values[0];
+                if (incomingId != agentSensorPos_.Id) {
+                    previousAgentSensorPos_.Set(agentSensorPos_);
+                }
+                agentSensorPos_.Id = incomingId;
+                agentSensorPos_.state = (AgentController.State)values[1];
+                agentSensorPos_.position = new Vector3((int)values[2], (int)values[4], (int)values[3]) / 1000.0f;
+                agentInfosSize_ = (int)values[5];
+                for (int i = 0; i < agentInfosSize_; i++) {
+                    agentInfos_[i].Id = (int)values[i * 4 + 6];
+                    agentInfos_[i].state = AgentController.State.Released;
+                    agentInfos_[i].position = new Vector3((int)values[i * 4 + 7], (int)values[i * 4 + 9], (int)values[i * 4 + 8]) / 1000.0f;
+                }
+                agentInfosFlag_ = true;
+            } catch (Exception) {//In case any conversion goes wrong because of malformed data from network or something
+                agentInfosFlag_ = false;
             }
-            agentInfosFlag_ = true;
         }
     }
 
@@ -93,27 +106,43 @@ public class AgentDataManager : MonoBehaviour
         instantiateAgentsFlag_ = false;
     }
 
-    int agentIdSensorPosition_ = -1;
-    Vector3 sensorPosition_;
-    bool sensorPositionFlag_ = false;
-    void SetSensorPosition() {
-        if (!sensorPositionFlag_) return;
-        var agentId = agentIdSensorPosition_;
-        var position = sensorPosition_;
-        if (Agents.TryGetValue(agentId, out var agent)) {
-            if (!agent.gameObject.activeSelf)
-                agent.gameObject.SetActive(true);
-            agent.SetState(AgentController.State.Locked);
-            agent.SetPosition(position);
-        }
-        sensorPositionFlag_ = false;
-    }
-
+    //int agentIdSensorPosition_ = -1;
+    //int agentStateSensorPosition_ = -1;
+    //Vector3 sensorPosition_;
+    //bool sensorPositionFlag_ = false;
+    //void SetSensorPosition() {
+    //    if (!sensorPositionFlag_) return;
+    //    if (Agents.TryGetValue(agentIdSensorPosition_, out var agent)) {
+    //        if (!agent.gameObject.activeSelf)
+    //            agent.gameObject.SetActive(true);
+    //        agent.SetStateFromInt(agentStateSensorPosition_);
+    //        agent.SetPosition(sensorPosition_);
+    //    }
+    //    sensorPositionFlag_ = false;
+    //}
+    AgentInfo agentSensorPos_ = new AgentInfo();
+    AgentInfo previousAgentSensorPos_ = new AgentInfo();
     AgentInfo[] agentInfos_;
     int agentInfosSize_ = 0;
     bool agentInfosFlag_ = false;
     void SetAgentsInfo() {
         if (!agentInfosFlag_) return;
+        //Set sensor position
+        if (Agents.TryGetValue(agentSensorPos_.Id, out var agentPosition)) {
+            if (previousAgentSensorPos_.Id != agentSensorPos_.Id && 
+                previousAgentSensorPos_.state == AgentController.State.Empty &&
+                Agents.TryGetValue(previousAgentSensorPos_.Id, out var previousAgentPosition) &&
+                previousAgentPosition.gameObject.activeSelf) {
+                previousAgentPosition.gameObject.SetActive(false);
+            }
+            agentPosition.SetState(agentSensorPos_.state);
+
+            if (!agentPosition.gameObject.activeSelf)
+                agentPosition.gameObject.SetActive(true);            
+            agentPosition.SetPosition(agentSensorPos_.position);
+        }
+
+        //Set agent infos
         for (int i = 0; i < agentInfosSize_; i++) {
             if (Agents.TryGetValue(agentInfos_[i].Id, out var agent)) {
                 if (!agent.gameObject.activeSelf)
@@ -125,24 +154,27 @@ public class AgentDataManager : MonoBehaviour
         }        
         agentInfosFlag_ = false;
     }
+
     public void SelectAgent(AgentController agent) {
 
-        //Change state accordingly
-        switch (agent.state) {
-            case AgentController.State.Locked:
-                agent.SetState(AgentController.State.Released);
-                break;
-            case AgentController.State.Released:
-                agent.SetState(AgentController.State.Locked);
-                break;
-            default:
-                break;
-        }
+        //Change state accordingly ->UPDATE: State is not changed because the max patch
+        //                          is the one that change and the new state is sent through 
+        //                          continuous data.
+        //switch (agent.state) {
+        //    case AgentController.State.Locked:
+        //        agent.SetState(AgentController.State.Released);
+        //        break;
+        //    case AgentController.State.Released:
+        //        agent.SetState(AgentController.State.Locked);
+        //        break;
+        //    default:
+        //        break;
+        //}
         
         //Send Message
-        selectOutStateMessage_[0] = agent.Id;
-        selectOutStateMessage_[1] = (int)agent.state;
-        osc.SendMessageToClient(selectOutState);
+        selectOutMessage_[0] = agent.Id;
+        //selectOutStateMessage_[1] = (int)agent.state;
+        osc.SendMessageToClient(selectOutAddress);
         //Debug.LogWarning("OSC SEND");
 
         //TO DO: Implement confirmation mesages startegy
@@ -158,19 +190,32 @@ public class AgentDataManager : MonoBehaviour
     private void Update() {
 
         InstantiateAgents();
-        SetSensorPosition();
+        //SetSensorPosition();
         SetAgentsInfo();
 
-        if (Input.GetKeyDown(KeyCode.S)) {
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+            SelectAgent(Agents[0]);
+        if (Input.GetKeyDown(KeyCode.Alpha2))
             SelectAgent(Agents[1]);
-        }
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+            SelectAgent(Agents[2]);
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+            SelectAgent(Agents[3]);
+
     }
 
     List<object> selectOutMessage_;
-    List<object> selectOutStateMessage_;
+    //<object> selectOutStateMessage_;
 
     public class AgentInfo {
         public int Id;
+        public AgentController.State state;
         public Vector3 position;
+
+        public void Set(AgentInfo other) {
+            Id = other.Id;
+            state = other.state;
+            position = other.position;
+        }
     }
 }
