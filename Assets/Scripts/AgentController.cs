@@ -13,6 +13,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     public Renderer render;
     public Color color;
     public TextMeshPro textNumber;
+    public TrailRenderer trail;
     //public Color onLockedColor;
     //public Color onReleasedColor;
     //public Color onFocusColor;
@@ -85,6 +86,10 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     public void SetColor(Color c) {
         color = c;
         render.material.color = color;
+        var startColor = color;
+        startColor.a = 0.5f;
+        trail.startColor = startColor;
+        trail.endColor = new Color(1,1,1,0);
     }
 
     #endregion
