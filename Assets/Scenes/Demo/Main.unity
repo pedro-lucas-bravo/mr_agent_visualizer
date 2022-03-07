@@ -152,9 +152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   osc: {fileID: 34552295}
   selectOutAddress: /agent/select
-  selectOutState: /agent/state
   instanceAgentAddress: /agent/instance
-  sensorPositionInAddress: /sensor/position
   agentsInfoAddress: /agents
   agentPrefab: {fileID: 7029161431789073741, guid: 67df25a69a1785c4e99b59c02c435d21,
     type: 3}

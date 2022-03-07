@@ -97,7 +97,7 @@ public class AgentDataManager : MonoBehaviour
 
             var newAgent = Instantiate(agentPrefab);
             newAgent.transform.SetParent(agentParent, true);
-            newAgent.Id = i;
+            newAgent.SetId(i);
             newAgent.SetStateFromInt(state);
             newAgent.SetColor(color);
             newAgent.gameObject.SetActive(false);
