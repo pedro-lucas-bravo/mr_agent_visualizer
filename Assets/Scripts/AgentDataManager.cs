@@ -17,6 +17,7 @@ public class AgentDataManager : MonoBehaviour
     //public string sensorPositionInAddress = "/sensor/position";
     public string agentsInfoAddress = "/agents";
     public string noteInfoAddress = "/note";
+    public string volumeInfoAddress = "/volume";
 
     [Header("Agent Parameters")]
     public AgentController agentPrefab;
@@ -56,17 +57,20 @@ public class AgentDataManager : MonoBehaviour
             instantiateAgentsFlag_ = true;
         }
 
-        if (address == noteInfoAddress && !noteFlag_) {//Instance new agents by removing the old ones first
+        if (address == noteInfoAddress && !noteFlag_) {
             agentNoteId_ = (int)values[0];
             noteFlag_ = true;
         }
 
-        //if (address == sensorPositionInAddress && !sensorPositionFlag_) {//Position from mocap for locked agent
-        //    agentIdSensorPosition_ = (int)values[0];
-        //    agentStateSensorPosition_ = (int)values[1];
-        //    sensorPosition_ = new Vector3((int)values[3], (int)values[4], (int)values[3]) / 1000.0f;
-        //    sensorPositionFlag_ = true;
-        //}
+        if (address == volumeInfoAddress && !volumeFlag_) {
+            agentVolumeId_ = (int)values[0];
+            try {
+                volumeValue_ = (float)values[1];
+            } catch {
+                volumeValue_ = (int)values[1];
+            }
+            volumeFlag_ = true;
+        }
 
         if (address == agentsInfoAddress && !agentInfosFlag_) {//Agents info, position and musical data
             try {
@@ -112,20 +116,6 @@ public class AgentDataManager : MonoBehaviour
         instantiateAgentsFlag_ = false;
     }
 
-    //int agentIdSensorPosition_ = -1;
-    //int agentStateSensorPosition_ = -1;
-    //Vector3 sensorPosition_;
-    //bool sensorPositionFlag_ = false;
-    //void SetSensorPosition() {
-    //    if (!sensorPositionFlag_) return;
-    //    if (Agents.TryGetValue(agentIdSensorPosition_, out var agent)) {
-    //        if (!agent.gameObject.activeSelf)
-    //            agent.gameObject.SetActive(true);
-    //        agent.SetStateFromInt(agentStateSensorPosition_);
-    //        agent.SetPosition(sensorPosition_);
-    //    }
-    //    sensorPositionFlag_ = false;
-    //}
     AgentInfo agentSensorPos_ = new AgentInfo();
     AgentInfo previousAgentSensorPos_ = new AgentInfo();
     AgentInfo[] agentInfos_;
@@ -171,6 +161,17 @@ public class AgentDataManager : MonoBehaviour
         noteFlag_ = false;
     }
 
+    int agentVolumeId_ = -1;
+    float volumeValue_ = 0;
+    bool volumeFlag_;
+    void SetAgentVolume() {
+        if (!volumeFlag_) return;
+        if (Agents.TryGetValue(agentVolumeId_, out var agent)) {
+            agent.SetShellSize(volumeValue_);
+        }
+        volumeFlag_ = false;
+    }
+
     public void SelectAgent(AgentController agent) {
 
         //Change state accordingly ->UPDATE: State is not changed because the max patch
@@ -209,6 +210,7 @@ public class AgentDataManager : MonoBehaviour
         //SetSensorPosition();
         SetAgentsInfo();
         SetAgentNote();
+        SetAgentVolume();
 
         //if (Input.GetKeyDown(KeyCode.Alpha1))
         //    SelectAgent(Agents[0]);
@@ -222,7 +224,6 @@ public class AgentDataManager : MonoBehaviour
     }
 
     List<object> selectOutMessage_;
-    //<object> selectOutStateMessage_;
 
     public class AgentInfo {
         public int Id;

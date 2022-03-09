@@ -22,6 +22,9 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     [Header("Balance")]
     public Color color;
     public float smoothTime = 0.15f;
+    public float emptySizeFactor = 0.35f;
+    public float minShellSize = 1.15f;
+    public float maxShellSize = 2f;
 
     private State state_;
     public State state {
@@ -30,7 +33,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
             state_ = value;
             switch (state_) {
                 case State.Empty:
-                    ApplyFeedback(true, 0.25f);
+                    ApplyFeedback(true, emptySizeFactor);
                     break;
                 case State.Locked:
                     ApplyFeedback(true, 1);
@@ -48,6 +51,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         transCore_ = render.transform;
         transText_ = textNumber.transform;
         transCage_ = cage.transform;
+        transShell_ = shell.transform;
         cameraTrans_ = Camera.main.transform;
 
         textSeparation_ = trans.lossyScale.x * 0.5f;
@@ -135,6 +139,10 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         beatingBehaviour.Apply();
     }
 
+    public void SetShellSize(float sizeFactor) {
+        transShell_.localScale = defaultCoreScale_ * Mathf.Lerp(minShellSize, maxShellSize, sizeFactor) *  Vector3.one;
+    }
+
     #endregion
 
     #region Feedback
@@ -149,8 +157,10 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
 
     void ApplyFeedback(bool isLocked, float coreScale) {
         cage.gameObject.SetActive(isLocked);
-        shell.gameObject.SetActive(!isLocked);
+        //shell.gameObject.SetActive(!isLocked);
+        transShell_.localScale /= transCore_.localScale.x;
         transCore_.localScale = coreScale * Vector3.one;
+        transShell_.localScale *= coreScale;
         defaultCoreScale_ = coreScale;
     }
 
@@ -191,6 +201,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     private Transform transCore_;
     private Transform transText_;
     private Transform transCage_;
+    private Transform transShell_;
     private Transform cameraTrans_;
     private float textSeparation_;
     private float defaultScale_;
