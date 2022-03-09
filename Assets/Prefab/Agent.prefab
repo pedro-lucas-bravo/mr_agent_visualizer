@@ -507,11 +507,56 @@ MonoBehaviour:
   Id: 1
   trans: {fileID: 7029161431789073745}
   render: {fileID: 5021487662989209818}
-  color: {r: 0, g: 0, b: 0, a: 0}
   textNumber: {fileID: 1537705931}
   trail: {fileID: 4883032721385967917}
   cage: {fileID: 7524397587550566871}
   shell: {fileID: 8760088536886764626}
+  beatingBehaviour:
+    beatingCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.25
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.5224099
+        value: 0.51232564
+        inSlope: -2.3512216
+        outSlope: -2.3512216
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.08776463
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    time: 0.5
+    factor: 0.2
+  color: {r: 0, g: 0, b: 0, a: 0}
   smoothTime: 0.05
 --- !u!1 &8636657445752271789
 GameObject:

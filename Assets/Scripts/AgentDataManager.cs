@@ -16,6 +16,7 @@ public class AgentDataManager : MonoBehaviour
     public string instanceAgentAddress = "/agent/instance";    
     //public string sensorPositionInAddress = "/sensor/position";
     public string agentsInfoAddress = "/agents";
+    public string noteInfoAddress = "/note";
 
     [Header("Agent Parameters")]
     public AgentController agentPrefab;
@@ -53,6 +54,11 @@ public class AgentDataManager : MonoBehaviour
         if (address == instanceAgentAddress && !instantiateAgentsFlag_) {//Instance new agents by removing the old ones first
             instanceAgentInfo_ = new List<object>(values);
             instantiateAgentsFlag_ = true;
+        }
+
+        if (address == noteInfoAddress && !noteFlag_) {//Instance new agents by removing the old ones first
+            agentNoteId_ = (int)values[0];
+            noteFlag_ = true;
         }
 
         //if (address == sensorPositionInAddress && !sensorPositionFlag_) {//Position from mocap for locked agent
@@ -155,6 +161,16 @@ public class AgentDataManager : MonoBehaviour
         agentInfosFlag_ = false;
     }
 
+    int agentNoteId_ = -1;
+    bool noteFlag_;
+    void SetAgentNote() {
+        if (!noteFlag_) return;
+        if (Agents.TryGetValue(agentNoteId_, out var agent)) {
+            agent.Beat();
+        }
+        noteFlag_ = false;
+    }
+
     public void SelectAgent(AgentController agent) {
 
         //Change state accordingly ->UPDATE: State is not changed because the max patch
@@ -192,15 +208,16 @@ public class AgentDataManager : MonoBehaviour
         InstantiateAgents();
         //SetSensorPosition();
         SetAgentsInfo();
+        SetAgentNote();
 
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-            SelectAgent(Agents[0]);
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-            SelectAgent(Agents[1]);
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-            SelectAgent(Agents[2]);
-        if (Input.GetKeyDown(KeyCode.Alpha4))
-            SelectAgent(Agents[3]);
+        //if (Input.GetKeyDown(KeyCode.Alpha1))
+        //    SelectAgent(Agents[0]);
+        //if (Input.GetKeyDown(KeyCode.Alpha2))
+        //    SelectAgent(Agents[1]);
+        //if (Input.GetKeyDown(KeyCode.Alpha3))
+        //    SelectAgent(Agents[2]);
+        //if (Input.GetKeyDown(KeyCode.Alpha4))
+        //    SelectAgent(Agents[3]);
 
     }
 

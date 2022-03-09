@@ -9,16 +9,18 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     public enum State { Empty, Locked, Released}
 
     public int Id;
+
+    [Header("Components")]
     public Transform trans;
-    public Renderer render;
-    public Color color;
+    public Renderer render;    
     public TextMeshPro textNumber;
     public TrailRenderer trail;
     public Renderer cage;
     public Renderer shell;
-    //public Color onLockedColor;
-    //public Color onReleasedColor;
-    //public Color onFocusColor;
+    public CrossBeatingBehaviour beatingBehaviour;
+    
+    [Header("Balance")]
+    public Color color;
     public float smoothTime = 0.15f;
 
     private State state_;
@@ -46,7 +48,11 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         transCore_ = render.transform;
         transText_ = textNumber.transform;
         transCage_ = cage.transform;
-        cameraTrans_ = Camera.main.transform;        
+        cameraTrans_ = Camera.main.transform;
+
+        textSeparation_ = trans.lossyScale.x * 0.5f;
+        defaultScale_ = trans.localScale.x;
+        defaultCoreScale_ = transCore_.localScale.x;
     }
 
     void Start() {
@@ -125,6 +131,10 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         trail.endColor = new Color(1,1,1,0);
     }
 
+    public void Beat() {
+        beatingBehaviour.Apply();
+    }
+
     #endregion
 
     #region Feedback
@@ -141,6 +151,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         cage.gameObject.SetActive(isLocked);
         shell.gameObject.SetActive(!isLocked);
         transCore_.localScale = coreScale * Vector3.one;
+        defaultCoreScale_ = coreScale;
     }
 
     #endregion
@@ -149,12 +160,19 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         var vel = Vector3.zero;        
         trans.localPosition = Vector3.SmoothDamp(trans.localPosition, lastPosition_, ref vel, smoothTime);
         var dir = (cameraTrans_.position - trans.position).normalized;
+        var deltaTime = Time.deltaTime;
         UpdateTextDirection(dir);
         UpdateCageDirection(dir);
+        UpdateBeating(deltaTime);
+
+        //Test
+        //if (Input.GetKeyDown(KeyCode.A)) {
+        //    beatingBehaviour.Apply();
+        //}
     }
 
     void UpdateTextDirection(Vector3 dir) {        
-        transText_.position = trans.position + dir * trans.lossyScale.x * 0.5f;
+        transText_.position = trans.position + dir * textSeparation_;
         transText_.forward = -dir;
     }
 
@@ -162,9 +180,19 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         transCage_.forward = -dir;
     }
 
+    void UpdateBeating(float deltaTime) {
+        beatingBehaviour.Update(deltaTime);
+        if (beatingBehaviour.IsApplying) {
+            transCore_.localScale = (defaultCoreScale_ + defaultCoreScale_ * beatingBehaviour.GetValue()) * Vector3.one;
+        }
+    }
+
     private Vector3 lastPosition_;
     private Transform transCore_;
     private Transform transText_;
     private Transform transCage_;
     private Transform cameraTrans_;
+    private float textSeparation_;
+    private float defaultScale_;
+    private float defaultCoreScale_;
 }
