@@ -525,7 +525,7 @@ MonoBehaviour:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 0.25
+        time: 0.1
         value: 1
         inSlope: 0
         outSlope: 0
@@ -534,14 +534,14 @@ MonoBehaviour:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.5224099
-        value: 0.51232564
-        inSlope: -2.3512216
-        outSlope: -2.3512216
+        time: 0.39969873
+        value: 0.52753866
+        inSlope: -2.0223927
+        outSlope: -2.0223927
         tangentMode: 0
         weightedMode: 0
         inWeight: 0.33333334
-        outWeight: 0.08776463
+        outWeight: 0.08379335
       - serializedVersion: 3
         time: 1
         value: 0
@@ -554,12 +554,13 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    time: 0.5
+    time: 0.3
     factor: 0.2
   color: {r: 0, g: 0, b: 0, a: 0}
   smoothTime: 0.05
-  minShellSize: 1.15
-  maxShellSize: 2
+  emptySizeFactor: 0.35
+  minShellSize: 1.1
+  maxShellSize: 1.5
 --- !u!1 &8636657445752271789
 GameObject:
   m_ObjectHideFlags: 0

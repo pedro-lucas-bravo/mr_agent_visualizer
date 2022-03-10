@@ -23,8 +23,8 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     public Color color;
     public float smoothTime = 0.15f;
     public float emptySizeFactor = 0.35f;
-    public float minShellSize = 1.15f;
-    public float maxShellSize = 2f;
+    public float minShellSize = 1.1f;
+    public float maxShellSize = 1.5f;
 
     private State state_;
     public State state {
@@ -57,6 +57,8 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         textSeparation_ = trans.lossyScale.x * 0.5f;
         defaultScale_ = trans.localScale.x;
         defaultCoreScale_ = transCore_.localScale.x;
+        defaulTextScale_ = transText_.localScale.x;
+        
     }
 
     void Start() {
@@ -162,6 +164,11 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         transCore_.localScale = coreScale * Vector3.one;
         transShell_.localScale *= coreScale;
         defaultCoreScale_ = coreScale;
+
+        transCage_.forward = transform.parent != null ? transform.parent.forward : Vector3.forward;
+
+        textSeparation_ = coreScale * trans.lossyScale.x * 0.5f;
+        transText_.localScale = coreScale * defaulTextScale_ * Vector3.one;
     }
 
     #endregion
@@ -172,7 +179,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         var dir = (cameraTrans_.position - trans.position).normalized;
         var deltaTime = Time.deltaTime;
         UpdateTextDirection(dir);
-        UpdateCageDirection(dir);
+        //UpdateCageDirection(dir);
         UpdateBeating(deltaTime);
 
         //Test
@@ -206,4 +213,5 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     private float textSeparation_;
     private float defaultScale_;
     private float defaultCoreScale_;
+    private float defaulTextScale_;
 }

@@ -101,15 +101,21 @@ public class AgentDataManager : MonoBehaviour
         RemoveAllAgents();
         var agentsSize = (int)instanceAgentInfo_[0];
         for (int i = 0; i < agentsSize; i++) {
-            var state = (int)instanceAgentInfo_[i * 2 + 1];
-            var colorHex = (string)instanceAgentInfo_[i * 2 + 2];
+            var state = (int)instanceAgentInfo_[i * 3 + 1];
+            var colorHex = (string)instanceAgentInfo_[i * 3 + 2];
             ColorUtility.TryParseHtmlString("#" + colorHex, out Color color);
-
+            float volume = 0.5f;
+            try {
+                volume = (float)instanceAgentInfo_[i * 3 + 3];
+            } catch {
+                volume = (int)instanceAgentInfo_[i * 3 + 3];
+            }
             var newAgent = Instantiate(agentPrefab);
             newAgent.transform.SetParent(agentParent, true);
             newAgent.SetId(i);
             newAgent.SetStateFromInt(state);
             newAgent.SetColor(color);
+            newAgent.SetShellSize(volume);
             newAgent.gameObject.SetActive(false);
             Agents.Add(i, newAgent);
         }
