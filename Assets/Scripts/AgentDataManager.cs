@@ -41,7 +41,7 @@ public class AgentDataManager : MonoBehaviour
     void Start() {
         //Sender message
         selectOutMessage_ = osc.DefineMessageToClient(selectOutAddress, 1);
-        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 3);
+        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 2);
         //selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
 
         //Receivers        
@@ -209,11 +209,13 @@ public class AgentDataManager : MonoBehaviour
 
     public void SendGazeDirection() {
         if (OSCHandler.Instance.Clients.Any()) {
-            var gazeDir = transCam_.forward;
-            gazeDirectionMessage_[0] = (int)(gazeDir.x * 1000);
-            gazeDirectionMessage_[1] = (int)(gazeDir.y * 1000);
-            gazeDirectionMessage_[2] = (int)(gazeDir.z * 1000);
-            osc.SendMessageToClient(gazeDirectionAddress);
+            if (Agents.ContainsKey(agentSensorPos_.Id)) {
+                var distance = Vector3.Distance(agentSensorPos_.position, transCam_.position);
+                var angle = Vector3.Angle(agentSensorPos_.position - transCam_.position, transCam_.forward);
+                gazeDirectionMessage_[0] = (int)(distance * 1000);
+                gazeDirectionMessage_[1] = (int)angle;                
+                osc.SendMessageToClient(gazeDirectionAddress);
+            }            
         }
     }
 
