@@ -10,6 +10,7 @@ public class AgentDataManager : MonoBehaviour
 
     [Header("Addresses to send")]
     public string selectOutAddress = "/agent/select";
+    public string gazeDirectionAddress = "/gaze";
     //public string selectOutState = "/agent/state";
 
     [Header("Addresses to receive")]
@@ -22,6 +23,7 @@ public class AgentDataManager : MonoBehaviour
     [Header("Agent Parameters")]
     public AgentController agentPrefab;
     public Transform agentParent;
+    public float gazePeriodSending = 1f;
 
     public Dictionary<int, AgentController> Agents { get; set; }
 
@@ -33,11 +35,13 @@ public class AgentDataManager : MonoBehaviour
         for (int i = 0; i < agentInfos_.Length; i++) {
             agentInfos_[i] = new AgentInfo();
         }
+        transCam_ = Camera.main.transform;
     }
 
     void Start() {
         //Sender message
         selectOutMessage_ = osc.DefineMessageToClient(selectOutAddress, 1);
+        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 3);
         //selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
 
         //Receivers        
@@ -203,6 +207,16 @@ public class AgentDataManager : MonoBehaviour
         //TO DO: Implement confirmation mesages startegy
     }
 
+    public void SendGazeDirection() {
+        if (OSCHandler.Instance.Clients.Any()) {
+            var gazeDir = transCam_.forward;
+            gazeDirectionMessage_[0] = (int)(gazeDir.x * 1000);
+            gazeDirectionMessage_[1] = (int)(gazeDir.y * 1000);
+            gazeDirectionMessage_[2] = (int)(gazeDir.z * 1000);
+            osc.SendMessageToClient(gazeDirectionAddress);
+        }
+    }
+
     private void RemoveAllAgents() {
         foreach (var agent in Agents) {
             Destroy(agent.Value.gameObject);
@@ -218,6 +232,12 @@ public class AgentDataManager : MonoBehaviour
         SetAgentNote();
         SetAgentVolume();
 
+        timerGaze_ += Time.deltaTime;
+        if (timerGaze_ > gazePeriodSending) {
+            SendGazeDirection();
+            timerGaze_ = 0;
+        }
+
         //if (Input.GetKeyDown(KeyCode.Alpha1))
         //    SelectAgent(Agents[0]);
         //if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -230,6 +250,9 @@ public class AgentDataManager : MonoBehaviour
     }
 
     List<object> selectOutMessage_;
+    List<object> gazeDirectionMessage_;
+    Transform transCam_;
+    float timerGaze_ = 0;
 
     public class AgentInfo {
         public int Id;
