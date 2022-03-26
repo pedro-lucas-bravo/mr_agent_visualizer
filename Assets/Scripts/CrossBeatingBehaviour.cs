@@ -12,7 +12,7 @@ public class CrossBeatingBehaviour {
     public bool IsApplying { get; private set; }
 
     public void Apply() {
-        if (currentValue_ < 16) {
+        if (currentIndex_ < 16) {
             timerStack_[currentIndex_++] = 0;
             IsApplying = true;
         }

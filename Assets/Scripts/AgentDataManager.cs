@@ -10,7 +10,8 @@ public class AgentDataManager : MonoBehaviour
 
     [Header("Addresses to send")]
     public string selectOutAddress = "/agent/select";
-    public string gazeDirectionAddress = "/gaze";
+    public string gazeDataAddress = "/gaze";
+    public string gazeDirectionAddress = "/gazedir";
     //public string selectOutState = "/agent/state";
 
     [Header("Addresses to receive")]
@@ -24,6 +25,7 @@ public class AgentDataManager : MonoBehaviour
     public AgentController agentPrefab;
     public Transform agentParent;
     public float gazePeriodSending = 1f;
+    public Transform worldReference;
 
     public Dictionary<int, AgentController> Agents { get; set; }
 
@@ -41,7 +43,8 @@ public class AgentDataManager : MonoBehaviour
     void Start() {
         //Sender message
         selectOutMessage_ = osc.DefineMessageToClient(selectOutAddress, 1);
-        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 2);
+        gazeDataMessage_ = osc.DefineMessageToClient(gazeDataAddress, 5);
+        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 6);
         //selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
 
         //Receivers        
@@ -77,24 +80,24 @@ public class AgentDataManager : MonoBehaviour
         }
 
         if (address == agentsInfoAddress && !agentInfosFlag_) {//Agents info, position and musical data
-            try {
+            //try {
                 var incomingId = (int)values[0];
                 if (incomingId != agentSensorPos_.Id) {
                     previousAgentSensorPos_.Set(agentSensorPos_);
                 }
                 agentSensorPos_.Id = incomingId;
                 agentSensorPos_.state = (AgentController.State)values[1];
-                agentSensorPos_.position = new Vector3((int)values[2], (int)values[4], (int)values[3]) / 1000.0f;
+                agentSensorPos_.position = new Vector3(Convert.ToInt32(values[2]), Convert.ToInt32(values[4]), Convert.ToInt32(values[3])) / 1000.0f;
                 agentInfosSize_ = (int)values[5];
                 for (int i = 0; i < agentInfosSize_; i++) {
                     agentInfos_[i].Id = (int)values[i * 4 + 6];
-                    agentInfos_[i].state = AgentController.State.Released;
-                    agentInfos_[i].position = new Vector3((int)values[i * 4 + 7], (int)values[i * 4 + 9], (int)values[i * 4 + 8]) / 1000.0f;
+                    agentInfos_[i].state = AgentController.State.Released;                
+                    agentInfos_[i].position = new Vector3(Convert.ToInt32(values[i * 4 + 7]), Convert.ToInt32(values[i * 4 + 9]), Convert.ToInt32(values[i * 4 + 8])) / 1000.0f;
                 }
                 agentInfosFlag_ = true;
-            } catch (Exception) {//In case any conversion goes wrong because of malformed data from network or something
-                agentInfosFlag_ = false;
-            }
+            //} catch (Exception) {//In case any conversion goes wrong because of malformed data from network or something
+            //    agentInfosFlag_ = false;
+            //}
         }
     }
 
@@ -207,15 +210,27 @@ public class AgentDataManager : MonoBehaviour
         //TO DO: Implement confirmation mesages startegy
     }
 
-    public void SendGazeDirection() {
+    public void SendGazeData() {
         if (OSCHandler.Instance.Clients.Any()) {
-            if (Agents.ContainsKey(agentSensorPos_.Id)) {
-                var distance = Vector3.Distance(agentSensorPos_.position, transCam_.position);
-                var angle = Vector3.Angle(agentSensorPos_.position - transCam_.position, transCam_.forward);
-                gazeDirectionMessage_[0] = (int)(distance * 1000);
-                gazeDirectionMessage_[1] = (int)angle;                
-                osc.SendMessageToClient(gazeDirectionAddress);
-            }            
+            //if (Agents.ContainsKey(agentSensorPos_.Id)) {
+            //    var distance = Vector3.Distance(agentSensorPos_.position, transCam_.position);
+            //    var angle = Vector3.Angle(agentSensorPos_.position - transCam_.position, transCam_.forward/*, Vector3.up*/);
+            //    gazeDataMessage_[0] = (int)(distance * 1000);
+            //    gazeDataMessage_[1] = (int)angle;
+            //    gazeDataMessage_[2] = (int)(agentSensorPos_.position.x * 1000);
+            //    gazeDataMessage_[3] = (int)(agentSensorPos_.position.z * 1000);//Change z by y because of max/msp convention
+            //    gazeDataMessage_[4] = (int)(agentSensorPos_.position.y * 1000);
+            //    osc.SendMessageToClient(gazeDataAddress);
+            //}
+            var camPos = transCam_.position - worldReference.position;
+            var camDir = worldReference.rotation * transCam_.forward;
+            gazeDirectionMessage_[0] = (int)(camPos.x * 1000);
+            gazeDirectionMessage_[1] = (int)(camPos.z * 1000);//Change z by y because of max/msp convention
+            gazeDirectionMessage_[2] = (int)(camPos.y * 1000);
+            gazeDirectionMessage_[3] = (int)(camDir.x * 1000);
+            gazeDirectionMessage_[4] = (int)(camDir.z * 1000);//Change z by y because of max/msp convention
+            gazeDirectionMessage_[5] = (int)(camDir.y * 1000);
+            osc.SendMessageToClient(gazeDirectionAddress);
         }
     }
 
@@ -236,7 +251,7 @@ public class AgentDataManager : MonoBehaviour
 
         timerGaze_ += Time.deltaTime;
         if (timerGaze_ > gazePeriodSending) {
-            SendGazeDirection();
+            SendGazeData();
             timerGaze_ = 0;
         }
 
@@ -252,6 +267,7 @@ public class AgentDataManager : MonoBehaviour
     }
 
     List<object> selectOutMessage_;
+    List<object> gazeDataMessage_;
     List<object> gazeDirectionMessage_;
     Transform transCam_;
     float timerGaze_ = 0;
