@@ -556,6 +556,8 @@ MonoBehaviour:
       m_RotationOrder: 4
     time: 0.3
     factor: 0.2
+  directionalIndicatorPrefab: {fileID: 4622334920988890423, guid: d755333d2d9eade4d8a71a1dc735da60,
+    type: 3}
   color: {r: 0, g: 0, b: 0, a: 0}
   smoothTime: 0.05
   emptySizeFactor: 0.35

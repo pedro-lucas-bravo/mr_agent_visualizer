@@ -18,6 +18,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     public Renderer cage;
     public Renderer shell;
     public CrossBeatingBehaviour beatingBehaviour;
+    public AgentDirectionalIndicator directionalIndicatorPrefab;
     
     [Header("Balance")]
     public Color color;
@@ -57,14 +58,28 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         textSeparation_ = trans.lossyScale.x * 0.5f;
         defaultScale_ = trans.localScale.x;
         defaultCoreScale_ = transCore_.localScale.x;
-        defaulTextScale_ = transText_.localScale.x;
-        
+        defaulTextScale_ = transText_.localScale.x;        
     }
 
     void Start() {
         //AgentDataManager.Instance.Agents.Add(Id, this);
         lastPosition_ = trans.position;
         state = State.Empty;
+    }
+
+    private void OnEnable() {
+        if (directionalIndicator_ != null)
+            directionalIndicator_.gameObject.SetActive(true);
+    }
+
+    private void OnDisable() {
+        if (directionalIndicator_ != null)
+            directionalIndicator_.gameObject.SetActive(false);
+    }
+
+    void OnDestroy() {
+        if (directionalIndicator_ != null && directionalIndicator_.gameObject != null)
+            Destroy(directionalIndicator_.gameObject);
     }
 
     public void OnFocusEnter() {
@@ -135,6 +150,13 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         startColor.a = 0.5f;
         trail.startColor = startColor;
         trail.endColor = new Color(1,1,1,0);
+    }
+
+    //It assume relevant properties were set before
+    public void CreateIndicator() {
+        directionalIndicator_ = Instantiate<AgentDirectionalIndicator>(directionalIndicatorPrefab);
+        directionalIndicator_.transform.position = Vector3.zero;
+        directionalIndicator_.InitializeFeedback(trans, color, Id + 1);
     }
 
     public void Beat() {
@@ -215,4 +237,5 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
     private float defaultScale_;
     private float defaultCoreScale_;
     private float defaulTextScale_;
+    private AgentDirectionalIndicator directionalIndicator_;
 }

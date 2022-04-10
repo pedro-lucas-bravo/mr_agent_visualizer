@@ -123,6 +123,7 @@ public class AgentDataManager : MonoBehaviour
             newAgent.SetStateFromInt(state);
             newAgent.SetColor(color);
             newAgent.SetShellSize(volume);
+            newAgent.CreateIndicator();
             newAgent.gameObject.SetActive(false);
             Agents.Add(i, newAgent);
         }
