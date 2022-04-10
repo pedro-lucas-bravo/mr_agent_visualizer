@@ -222,14 +222,14 @@ public class AgentDataManager : MonoBehaviour
             //    gazeDataMessage_[4] = (int)(agentSensorPos_.position.y * 1000);
             //    osc.SendMessageToClient(gazeDataAddress);
             //}
-            var camPos = transCam_.position - worldReference.position;
-            var camDir = worldReference.rotation * transCam_.forward;
-            gazeDirectionMessage_[0] = (int)(camPos.x * 1000);
-            gazeDirectionMessage_[1] = (int)(camPos.z * 1000);//Change z by y because of max/msp convention
-            gazeDirectionMessage_[2] = (int)(camPos.y * 1000);
-            gazeDirectionMessage_[3] = (int)(camDir.x * 1000);
-            gazeDirectionMessage_[4] = (int)(camDir.z * 1000);//Change z by y because of max/msp convention
-            gazeDirectionMessage_[5] = (int)(camDir.y * 1000);
+            var camPos = worldReference.InverseTransformPoint(transCam_.position) * worldReference.localScale.x;
+            var camDir = worldReference.InverseTransformVector(transCam_.forward).normalized;
+            gazeDirectionMessage_[0] = Mathf.RoundToInt(camPos.x * 1000);
+            gazeDirectionMessage_[1] = Mathf.RoundToInt(camPos.z * 1000);//Change z by y because of max/msp convention
+            gazeDirectionMessage_[2] = Mathf.RoundToInt(camPos.y * 1000);
+            gazeDirectionMessage_[3] = Mathf.RoundToInt(camDir.x * 1000);
+            gazeDirectionMessage_[4] = Mathf.RoundToInt(camDir.z * 1000);//Change z by y because of max/msp convention
+            gazeDirectionMessage_[5] = Mathf.RoundToInt(camDir.y * 1000);
             osc.SendMessageToClient(gazeDirectionAddress);
         }
     }

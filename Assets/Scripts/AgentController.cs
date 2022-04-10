@@ -165,6 +165,7 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         transShell_.localScale *= coreScale;
         defaultCoreScale_ = coreScale;
 
+        transCage_.localScale = coreScale * Vector3.one;
         transCage_.forward = transform.parent != null ? transform.parent.forward : Vector3.forward;
 
         textSeparation_ = coreScale * trans.lossyScale.x * 0.5f;
