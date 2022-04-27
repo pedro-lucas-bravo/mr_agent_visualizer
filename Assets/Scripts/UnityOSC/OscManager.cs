@@ -16,12 +16,13 @@ public class OscManager : MonoBehaviour {
 
 	private Dictionary<string, List<object>> messagesToSend;
 
-	public Action<string, List<object>> OnReceiveMessage;//oscaddress, values
+	public Action<string, List<object>, OSCPacket> OnReceiveMessage;//oscaddress, values
     public Action<string, List<object>> OnReceiveMessageOnMainThread;//oscaddress, values
 
     private bool wasReceived_ = false;
 	private string lastAddress_;
 	private List<object> lastData_;
+    private OSCPacket lastPacket_;
 
     public static readonly string CONNECT_ADDRESS = "/connect";
 
@@ -37,14 +38,15 @@ public class OscManager : MonoBehaviour {
 		OSCHandler.Instance.OnReceiveMessage += OnReceive;
 	}
 
-    private void OnReceive(string address, List<object> data) {
+    private void OnReceive(string address, List<object> data, OSCPacket packet) {
         wasReceived_ = true;//The flag strategy avoids to execute unity code in a different thread
         lastAddress_ = address;
         lastData_ = data;
+        lastPacket_ = packet;
         if (lastAddress_ == CONNECT_ADDRESS)
             ConnectClient();
         if (OnReceiveMessage != null) {
-            OnReceiveMessage(lastAddress_, lastData_);
+            OnReceiveMessage(lastAddress_, lastData_, lastPacket_);
         }
     }
 
@@ -65,13 +67,18 @@ public class OscManager : MonoBehaviour {
 	}
 
 	private List<object> DefineMessage(Dictionary<string, List<object>> messages, string oscAddress, int numberOfValues) {
-		if (!messages.ContainsKey(oscAddress)) {
-			var values = new List<object>();
+        List<object> GetNewList() {
+            var values = new List<object>();
             for (int i = 0; i < numberOfValues; i++) {
-				values.Add(null);
+                values.Add(null);
             }
-			messages.Add(oscAddress, values);
-		}
+            return values;
+        }        
+        if (!messages.ContainsKey(oscAddress)) {           
+            messages.Add(oscAddress, GetNewList());
+        } else {
+            messages[oscAddress] = GetNewList();
+        }
 		return messages[oscAddress];
 	}
 

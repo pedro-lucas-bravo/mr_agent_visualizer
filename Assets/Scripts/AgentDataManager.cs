@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using TMPro;
+using UnityOSC;
 
 public class AgentDataManager : MonoBehaviour
 {    
@@ -27,7 +29,22 @@ public class AgentDataManager : MonoBehaviour
     public float gazePeriodSending = 1f;
     public Transform worldReference;
 
+    [Header("Testing")]
+    public TextMeshPro counterPkgText;
+
     public Dictionary<int, AgentController> Agents { get; set; }
+    public class DataTime { 
+        public int startTime;
+        public int length;
+        public int frameLength;
+
+        public DataTime(int sT) {
+            startTime = sT;
+            length = 0;
+            frameLength = 0;
+        }
+    }
+    public Dictionary<string, DataTime> processTimeDic = new Dictionary<string, DataTime>();
 
     public static AgentDataManager Instance;
     private void Awake() {
@@ -38,13 +55,15 @@ public class AgentDataManager : MonoBehaviour
             agentInfos_[i] = new AgentInfo();
         }
         transCam_ = Camera.main.transform;
+        startFrameTime = DateTime.Now.Millisecond;
     }
 
     void Start() {
         //Sender message
         selectOutMessage_ = osc.DefineMessageToClient(selectOutAddress, 1);
         gazeDataMessage_ = osc.DefineMessageToClient(gazeDataAddress, 5);
-        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 6);
+        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 6);        
+
         //selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
 
         //Receivers        
@@ -58,7 +77,7 @@ public class AgentDataManager : MonoBehaviour
     }
 
     //It receives in another thread, that is why it needs to fill non-unity objects to do modifications in main thread
-    private void OnReceive(string address, List<object> values) {
+    private void OnReceive(string address, List<object> values, OSCPacket packet) {
         if (address == instanceAgentAddress && !instantiateAgentsFlag_) {//Instance new agents by removing the old ones first
             instanceAgentInfo_ = new List<object>(values);
             instantiateAgentsFlag_ = true;
@@ -79,8 +98,16 @@ public class AgentDataManager : MonoBehaviour
             volumeFlag_ = true;
         }
 
-        if (address == agentsInfoAddress && !agentInfosFlag_) {//Agents info, position and musical data
-            //try {
+        //if (address == agentsInfoAddress && !agentInfosFlag_) {//Agents info, position and musical data
+        if (address.Contains(agentsInfoAddress) && !agentInfosFlag_) {//Agents info, position and musical data
+                                                                      //try {
+            if (processTime) {
+                if(!processTimeDic.ContainsKey(address))
+                    processTimeDic.Add(address, new DataTime(DateTime.Now.Millisecond));
+                else
+                    processTimeDic[address] = new DataTime(DateTime.Now.Millisecond);
+                lastAgentInfosAddress_ = address;
+            }
                 var incomingId = (int)values[0];
                 if (incomingId != agentSensorPos_.Id) {
                     previousAgentSensorPos_.Set(agentSensorPos_);
@@ -95,11 +122,64 @@ public class AgentDataManager : MonoBehaviour
                     agentInfos_[i].position = new Vector3(Convert.ToInt32(values[i * 4 + 7]), Convert.ToInt32(values[i * 4 + 9]), Convert.ToInt32(values[i * 4 + 8])) / 1000.0f;
                 }
                 agentInfosFlag_ = true;
+            //TEST - FOR ROUND TRIP
+                if (roundTrip) {
+                    roundTripAgentsMessage_ = osc.DefineMessageToClient(address, values.Count);
+                    for (int i = 0; i < values.Count; i++) {
+                        roundTripAgentsMessage_[i] = values[i];
+                    }
+                    osc.SendMessageToClient(address);
+                }
+            if (countPkg) {
+                counterPkg++;
+                sizePkgAcc += packet.BinaryData.Length;
+            }            
             //} catch (Exception) {//In case any conversion goes wrong because of malformed data from network or something
             //    agentInfosFlag_ = false;
             //}
         }
+
+        if (address == "/pkg0") {
+            countPkg = true;            
+        }
+
+        if (address == "/pkg1") {
+            countPkg = false;
+        }
+
+        if (address == "roundtrip0") {
+            roundTrip = true;
+        }
+
+        if (address == "roundtrip1") {
+            roundTrip = false;
+        }
+
+        if (address == "processtime0") {
+            processTime = true;
+            processTimeDic.Clear();
+        }
+
+        if (address == "processtime1") {
+            processTime = false;
+            sendProcessResult = true;
+        }
+
+        if (address == packetsAddress) {
+            packetsRequest = true;
+        }
     }
+
+    bool roundTrip = false;
+    bool processTime = false;
+    bool sendProcessResult = false;
+    bool packetsRequest = false;
+
+    bool countPkg = false;
+    int counterPkg = 0;
+    int lastCounterPkg = 0;
+    int sizePkgAcc = 0;
+    float lastSizePkg = 0;
 
     List<object> instanceAgentInfo_;
     bool instantiateAgentsFlag_ = false;
@@ -135,6 +215,12 @@ public class AgentDataManager : MonoBehaviour
     AgentInfo[] agentInfos_;
     int agentInfosSize_ = 0;
     bool agentInfosFlag_ = false;
+    string lastAgentInfosAddress_ = "";
+
+    string packetsAddress = "/packets";
+
+    int startFrameTime = 0;
+    int frameLength = 0;
     void SetAgentsInfo() {
         if (!agentInfosFlag_) return;
         //Set sensor position
@@ -163,6 +249,13 @@ public class AgentDataManager : MonoBehaviour
             }
         }        
         agentInfosFlag_ = false;
+        
+        if (processTime) {
+            if (processTimeDic.ContainsKey(lastAgentInfosAddress_)) {
+                processTimeDic[lastAgentInfosAddress_].length = DateTime.Now.Millisecond - processTimeDic[lastAgentInfosAddress_].startTime;
+                processTimeDic[lastAgentInfosAddress_].frameLength = frameLength;
+            }
+        }        
     }
 
     int agentNoteId_ = -1;
@@ -265,11 +358,54 @@ public class AgentDataManager : MonoBehaviour
         //if (Input.GetKeyDown(KeyCode.Alpha4))
         //    SelectAgent(Agents[3]);
 
+        //TEST
+        if (countPkg) {
+            counterPkgText.color = Color.green;
+            counterPkgText.text = counterPkg + "";
+        }
+        if (!countPkg && counterPkg > 0) {
+            counterPkgText.color = Color.red;
+            counterPkgText.text = counterPkg + "";
+            lastCounterPkg = counterPkg;
+            lastSizePkg = (float)sizePkgAcc / (float)counterPkg;
+            counterPkg = 0;
+            sizePkgAcc = 0;
+        }
+
+        var currentTime = DateTime.Now.Millisecond;
+        frameLength = currentTime - startFrameTime;
+        startFrameTime = currentTime;
+
+        if (sendProcessResult) {
+            StartCoroutine(SendProcessResult());
+            sendProcessResult = false;
+        }
+
+        if (!countPkg && packetsRequest) {
+            var pkgMsg = osc.DefineMessageToClient(packetsAddress, 2);
+            pkgMsg[0] = lastCounterPkg;
+            pkgMsg[1] = lastSizePkg;
+            osc.SendMessageToClient(packetsAddress);
+            packetsRequest = false;
+        }
+    }
+
+    IEnumerator SendProcessResult() {
+        foreach(var item in processTimeDic) {
+            var processMsgs = osc.DefineMessageToClient(item.Key, 2);
+            for (int i = 0; i < 3; i++) {
+                processMsgs[0] = item.Value.length;
+                processMsgs[1] = item.Value.frameLength;
+            }
+            osc.SendMessageToClient(item.Key);
+            yield return new WaitForSeconds(0.05f);
+        }
     }
 
     List<object> selectOutMessage_;
     List<object> gazeDataMessage_;
     List<object> gazeDirectionMessage_;
+    List<object> roundTripAgentsMessage_;
     Transform transCam_;
     float timerGaze_ = 0;
 
