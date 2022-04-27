@@ -159,6 +159,8 @@ public class AgentController : MonoBehaviour, IFocusable, IInputClickHandler {
         directionalIndicator_.InitializeFeedback(trans, color, Id + 1);
     }
 
+    public bool IsInFov => directionalIndicator_ == null ? false : (directionalIndicator_.indicator.IsElementInFOV && isActiveAndEnabled);
+
     public void Beat() {
         beatingBehaviour.Apply();
     }

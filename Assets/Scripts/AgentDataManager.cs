@@ -14,6 +14,7 @@ public class AgentDataManager : MonoBehaviour
     public string selectOutAddress = "/agent/select";
     public string gazeDataAddress = "/gaze";
     public string gazeDirectionAddress = "/gazedir";
+    public string areInFovAddress = "/fovagents";//are agents in field of view
     //public string selectOutState = "/agent/state";
 
     [Header("Addresses to receive")]
@@ -62,7 +63,8 @@ public class AgentDataManager : MonoBehaviour
         //Sender message
         selectOutMessage_ = osc.DefineMessageToClient(selectOutAddress, 1);
         gazeDataMessage_ = osc.DefineMessageToClient(gazeDataAddress, 5);
-        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 6);        
+        gazeDirectionMessage_ = osc.DefineMessageToClient(gazeDirectionAddress, 6);
+        fovAgentsMessage_ = osc.DefineMessageToClient(areInFovAddress, 1);
 
         //selectOutStateMessage_ = osc.DefineMessageToClient(selectOutState, 2);
 
@@ -328,12 +330,27 @@ public class AgentDataManager : MonoBehaviour
         }
     }
 
+    public void SendFovData() {
+        if (OSCHandler.Instance.Clients.Any()) {
+            //Packing
+            var info = "";
+            foreach (var agent in Agents) {
+                info += agent.Key + " " + (agent.Value.IsInFov ? 1 : 0) + " ";
+            }
+            //Sending
+            fovAgentsMessage_[0] = info;
+            osc.SendMessageToClient(areInFovAddress);
+        }
+    }
+
     private void RemoveAllAgents() {
         foreach (var agent in Agents) {
             Destroy(agent.Value.gameObject);
         }
         Agents.Clear();
     }
+
+    bool sendFovMsg_ = false;
 
     private void Update() {
 
@@ -343,10 +360,16 @@ public class AgentDataManager : MonoBehaviour
         SetAgentNote();
         SetAgentVolume();
 
+        if (sendFovMsg_) {//send in the next frame from gaze
+            SendFovData();
+            sendFovMsg_ = false;
+        }
+
         timerGaze_ += Time.deltaTime;
         if (timerGaze_ > gazePeriodSending) {
             SendGazeData();
             timerGaze_ = 0;
+            sendFovMsg_ = true;
         }
 
         //if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -406,6 +429,7 @@ public class AgentDataManager : MonoBehaviour
     List<object> gazeDataMessage_;
     List<object> gazeDirectionMessage_;
     List<object> roundTripAgentsMessage_;
+    List<object> fovAgentsMessage_;
     Transform transCam_;
     float timerGaze_ = 0;
 

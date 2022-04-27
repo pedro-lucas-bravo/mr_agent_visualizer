@@ -561,7 +561,7 @@ MonoBehaviour:
   color: {r: 0, g: 0, b: 0, a: 0}
   smoothTime: 0.05
   emptySizeFactor: 0.35
-  minShellSize: 1.1
+  minShellSize: 1
   maxShellSize: 1.5
 --- !u!1 &8636657445752271789
 GameObject:

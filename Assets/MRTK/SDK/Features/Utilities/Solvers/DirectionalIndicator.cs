@@ -50,6 +50,8 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Solvers
 
         private bool indicatorShown = false;
 
+        public bool IsElementInFOV => !indicatorShown;
+
         protected override void Start()
         {
             base.Start();
